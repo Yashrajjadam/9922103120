@@ -1,0 +1,47 @@
+let window = [];
+const WINDOW_SIZE = 10;
+
+export default async function handler(req, res) {
+  const { id } = req.query;
+  if (!['C', 'F', 'E', 'R'].includes(id)) {
+    return res.status(400).json({ error: 'Invalid ID' });
+  }
+
+  try {
+    const start = performance.now();
+
+    // Simulated fetch from a third-party source
+    const num = await getNumberByID(id);
+
+    const time = performance.now() - start;
+    if (time > 0.7) return res.status(408).json({ error: 'Too slow' });
+    if (window.includes(num)) return res.status(409).json({ error: 'Duplicate' });
+
+    if (window.length >= WINDOW_SIZE) window.shift(); // Remove oldest
+    window.push(num);
+
+    const avg = window.reduce((a, b) => a + b, 0) / window.length;
+    res.json({ number: num, average: avg.toFixed(2), window });
+  } catch {
+    res.status(500).json({ error: 'Fetch failed' });
+  }
+}
+
+async function getNumberByID(id) {
+  switch (id) {
+    case 'C': return getRandomPrime();
+    case 'F': return getFibonacci();
+    case 'E': return 2 * Math.floor(Math.random() * 50);
+    case 'R': return Math.floor(Math.random() * 100);
+  }
+}
+
+function getRandomPrime() {
+  const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29];
+  return primes[Math.floor(Math.random() * primes.length)];
+}
+
+function getFibonacci() {
+  const fibs = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55];
+  return fibs[Math.floor(Math.random() * fibs.length)];
+}
